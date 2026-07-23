@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cleft Palate Augmented Reality Model</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: "Aptos", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #ffffff;
+    color: #1a1a1a;
+  }
+  header {
+    padding: 20px 16px 12px;
+    text-align: center;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  header p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+  }
+  model-viewer {
+    width: 100%;
+    height: 60vh;
+    min-height: 380px;
+    background-color: #f2f2f2;
+    --poster-color: transparent;
+  }
+  .ar-button {
+    background: #cc5500;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #333;
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .swatch.cleft { background: #cc5500; }
+  .swatch.bone { background: #e8e0d0; border: 1px solid #ccc; }
+  .hotspot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #cc5500;
+    border: 2px solid white;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    cursor: pointer;
+    padding: 0;
+  }
+  .hotspot-label {
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  #coord-picker-output {
+    font-size: 12px;
+    text-align: center;
+    padding: 6px;
+    background: #fff3e6;
+    border: 1px solid #cc5500;
+    margin: 8px 16px 0;
+    display: none;
+  }
+  .info {
+    padding: 4px 16px 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+  }
+  .info h2 {
+    font-size: 15px;
+    margin: 16px 0 6px;
+  }
+  footer {
+    padding: 16px;
+    font-size: 11px;
+    color: #999;
+    text-align: center;
+    border-top: 1px solid #eee;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="adelaide-university-logo.png" alt="Adelaide University logo" style="height: 44px; margin-bottom: 12px;">
+  <h1>Cleft Palate Augmented Reality Model</h1>
+</header>
+
+<!--
+  REPLACE THE FILE PATHS BELOW with your own exported files:
+  - src        = your .glb file (Android / general web viewing)
+  - ios-src    = your .usdz file (iOS AR Quick Look)
+  Upload both files to the same folder as this HTML page, or update the paths
+  to point wherever you're hosting them.
+-->
+<p style="text-align: center; font-size: 14px; color: #444; margin: 16px 16px 24px;">
+  On iPhone or Android, tap "View in AR" below to place the model in the room with you. On a computer, drag to rotate.
+</p>
+
+<div style="position: relative;">
+  <model-viewer
+    id="skull-viewer"
+    src="cleft-palate-trial-3.glb"
+    ios-src="cleft-palate-trial-3.usdz"
+    alt="3D model showing a complete unilateral cleft palate, with the cleft highlighted"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    camera-controls
+    auto-rotate
+    auto-rotate-delay="3000"
+    rotation-per-second="20deg"
+    shadow-intensity="1"
+    exposure="1"
+    camera-orbit="0deg 75deg 105%"
+  >
+    <button slot="ar-button" class="ar-button">View in AR</button>
+
+    <!-- HOTSPOTS: one <button> per label. Replace the data-position numbers
+         with real coordinates found using the picker tool below, then
+         update the label text inside each hotspot-label div. Add or
+         remove buttons as needed — just give each a unique slot name. -->
+    <button class="hotspot" slot="hotspot-1" data-position="0 0 0" data-normal="0 1 0">
+      <div class="hotspot-label">Left maxilla</div>
+    </button>
+    <button class="hotspot" slot="hotspot-2" data-position="0 0 0" data-normal="0 1 0">
+      <div class="hotspot-label">Palatine bone</div>
+    </button>
+    <button class="hotspot" slot="hotspot-3" data-position="0 0 0" data-normal="0 1 0">
+      <div class="hotspot-label">Cleft</div>
+    </button>
+  </model-viewer>
+</div>
+
+<!-- TEMPORARY COORDINATE PICKER — remove this whole block once you've
+     found and filled in all your hotspot positions above -->
+<div id="coord-picker-output"></div>
+<script>
+  const viewer = document.querySelector('#skull-viewer');
+  const output = document.querySelector('#coord-picker-output');
+  viewer.addEventListener('load', () => {
+    viewer.addEventListener('click', (event) => {
+      const hit = viewer.positionAndNormalFromPoint(event.clientX, event.clientY);
+      if (hit) {
+        const p = hit.position;
+        const n = hit.normal;
+        const text = `data-position="${p.x.toFixed(4)} ${p.y.toFixed(4)} ${p.z.toFixed(4)}" data-normal="${n.x.toFixed(2)} ${n.y.toFixed(2)} ${n.z.toFixed(2)}"`;
+        output.style.display = 'block';
+        output.textContent = text;
+        console.log(text);
+      }
+    });
+  });
+</script>
+
+<div class="info">
+  <h2>What you're looking at:</h2>
+  <p>
+    This model shows a complete unilateral left cleft palate on a skull model.
+    The area highlighted in orange demonstrates where the bone did not
+    fully join together before birth, which has resulted in the defect
+    in the left maxilla and left palatine bone.
+  </p>
+  <p>
+    For more information on cleft palate surgical repair, please visit
+    any of the links below:
+  </p>
+  <ol style="padding-left: 20px; margin: 0 0 8px;">
+    <li>An overview of cleft lip and palate published by the Australian Government: <a href="https://www.healthdirect.gov.au/cleft-lip-and-cleft-palate" target="_blank" rel="noopener">https://www.healthdirect.gov.au/cleft-lip-and-cleft-palate</a></li>
+    <li>A downloadable summary from The Royal Children's Hospital Melbourne, on the potential impacts of cleft palate for infants: <a href="https://www.rch.org.au/uploadedFiles/Main/Content/kidsinfo/cleft-palate-booklet.pdf" target="_blank" rel="noopener">https://www.rch.org.au/uploadedFiles/Main/Content/kidsinfo/cleft-palate-booklet.pdf</a></li>
+    <li>An overview of cleft lip and palate and information on the surgery, published by the Cleveland Clinic: <a href="https://my.clevelandclinic.org/health/treatments/23394-cleft-lip-cleft-palate-surgery" target="_blank" rel="noopener">https://my.clevelandclinic.org/health/treatments/23394-cleft-lip-cleft-palate-surgery</a></li>
+    <li>A downloadable summary from the Women's and Children's Hospital, South Australia on care after cleft palate surgery: <a href="https://cdn.wchn.sa.gov.au/downloads/WCH/children/craniofacial/Cleft-Palate-Repair-Fact-Sheet-2022.pdf" target="_blank" rel="noopener">https://cdn.wchn.sa.gov.au/downloads/WCH/children/craniofacial/Cleft-Palate-Repair-Fact-Sheet-2022.pdf</a></li>
+  </ol>
+
+  <h2>Types of cleft palate:</h2>
+  <img src="cleft-lip-and-palate-types-image.png" alt="Illustration comparing unilateral and bilateral cleft lip, and unilateral and bilateral cleft lip and palate" style="width: 100%; max-width: 600px; display: block; margin: 8px auto;">
+  <p style="font-size: 13px; color: #666;">
+    The diagram above shows common types of cleft lip and palate. The image was published by BruceBlaus in 2016 and is available at:
+    <a href="https://commons.wikimedia.org/wiki/File:Unilateral_and_Bilateral_Cleft_Lip_and_Palate.png" target="_blank" rel="noopener">https://commons.wikimedia.org/wiki/File:Unilateral_and_Bilateral_Cleft_Lip_and_Palate.png</a>
+  </p>
+  <h2>How to use this:</h2>
+  <p>
+    Drag with one finger to rotate the model. Pinch to zoom. On a phone or
+    tablet, tap "View in AR" to place a life-size version of the model in
+    the room in front of you.
+  </p>
+  <h2>Research project:</h2>
+  <p style="text-align: justify;">
+    This model was created for the research project
+    <em>"The Use of 3D Printed and Augmented Reality Models as Educational
+    Aids in Cleft Care: A Comparative Study"</em> under Adelaide University.
+    The aims of this project are to investigate the preferences of
+    patients and clinicians when offered traditional paper-based
+    pamphlets, augmented reality models and 3D printed models. The 3D
+    model was crafted in the application Blender to render the 3D model
+    of a skull with left unilateral cleft palate depicted above. This
+    model will be 3D printed and used as the 3D printed educational tool
+    shared with clinicians and patients.
+  </p>
+</div>
+
+<footer>
+  Model adapted from "Maxillae" by Anatomary (Sketchfab, CC BY-NC-SA 4.0),
+  based on BodyParts3D data (Life Sciences Integrated Database Center).
+  Designed for patient education purposes.
+</footer>
+
+</body>
+</html>
